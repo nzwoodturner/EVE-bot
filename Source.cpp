@@ -2,9 +2,10 @@
 #include <windows.h>
 #include <iostream>
 #include <time.h>
+#include <string>
 using namespace std;
 #include <cstdlib>
-
+//window size must be 1016*1008
 int permY = 0;
 HWND eveWindow;
 void pressKey(WORD key, int x);
@@ -31,12 +32,14 @@ void KeyDown(WORD key, int x);
 int belt = 0;
 bool IsWhite(int x, int y);
 void shutdown();
+int colour;
+int check = 0;
 int main(int argc, CHAR *argv[])
 {
 	srand(time(NULL));
 	POINT ptMouse;
 	RECT windowPosition;
-	eveWindow = FindWindow(NULL, TEXT("EVE - Killer Haginen"));
+	eveWindow = FindWindow(NULL, TEXT("EVE - Miner Esubria"));
 	COLORREF color1;
 	COLORREF color2;
 	COLORREF color3;
@@ -57,18 +60,30 @@ int main(int argc, CHAR *argv[])
 	cout << "everything Checks out\n" ;
 	cout << "------------------------------------\n" ;
 	while (true) {
+		check = 0;
 		undock();
 		cout << "undocked\n";
 		warp();
 		cout << "warped\n";
 		launchDrones();
 		cout << "drones launched\n";
-		target();
-		cout << "targeted\n";
-		mine();
-		cout << "mining\n";
+		hDC = GetDC(NULL);
 
-		int check = 0;
+		color3 = GetPixel(hDC, 776 + windowPosition.left, 249 + windowPosition.top);
+		ReleaseDC(GetDesktopWindow(), hDC);
+		if (GetRValue(color3) > 120)
+		{
+			check = 1;
+			belt++;
+			cout << "belt empty\n";
+		}
+		else {
+			target();
+			cout << "targeted\n";
+			mine();
+			cout << "mining\n";
+		}
+
 
 		while (check ==0)
 		{
@@ -82,9 +97,16 @@ int main(int argc, CHAR *argv[])
 			{
 				check = 1;
 				cout << "taking damage\n";
+				belt++;
 			}
 			Sleep(1000);
-			if (IsWhite(639, 112) == false)
+			hDC = GetDC(NULL);
+
+			color3 = GetPixel(hDC, 644+windowPosition.left, 114+windowPosition.top);
+			ReleaseDC(GetDesktopWindow(), hDC);
+			colour = GetRValue(color3);
+			//cout << to_string(colour)+"\n";
+			if (GetRValue(color3) < 170)
 			{
 				target();
 				cout << "targeted\n";
@@ -93,17 +115,19 @@ int main(int argc, CHAR *argv[])
 				
 			}
 			hDC = GetDC(NULL);
-			color1 = GetPixel(hDC, 966, 241);
-			color2 = GetPixel(hDC, 969, 268);
-			color3 = GetPixel(hDC, 966, 300);
+			color3 = GetPixel(hDC, 780+windowPosition.left, 238+windowPosition.top);
 			ReleaseDC(GetDesktopWindow(), hDC);
-			if ((GetRValue(color1)==GetRValue(color2))&&(GetRValue(color1)>GetRValue(color3)))
+			if (GetRValue(color3)>120)
 			{
 				check = 1;
 				belt++;
 				cout << "belt empty\n";
 			}
 
+		}
+		if (belt >= 16)
+		{
+			belt = 0;
 		}
 		recallDrones();
 		cout << "drones recalled\n";
@@ -120,7 +144,7 @@ void recallDrones()
 	Sleep(100);
 	pressKey(0x52, 1);
 	KeyUp(VK_SHIFT, 1);
-	Sleep(7000);
+	//Sleep(7000);
 
 }
 void launchDrones()
@@ -164,7 +188,7 @@ int mine()
 	int check = 0;
 	COLORREF color;
 	HDC hDC;
-	while (check == 0)
+	/*while (check == 0)
 	{
 
 		hDC = GetDC(NULL);
@@ -176,27 +200,34 @@ int mine()
 		ReleaseDC(GetDesktopWindow(), hDC);
 		if (GetRValue(color) > 110)
 			check = 1;
-	}
+	}*/
 	pressKey(VK_F1, 1);
 	pressKey(VK_F2,1);
+	Sleep(200);
+	KeyDown(VK_CONTROL, 1);
+	Sleep(200);
+	pressKey(VK_SPACE, 1);
+	Sleep(150);
+	KeyUp(VK_CONTROL, 1);
+	//MoveMouse(701, 114, 1);
 	return 0;
 }
 void target()
 {
-	int y = 0;
 	int check = 0;
 
-	MoveMouse(625, 240+(y*16), 6);
+	MoveMouse(627, 220, 6);
 
 
-	ClickMouse(625, 240 + (y * 16));
+	ClickMouse(627, 220 );
 
-	MoveMouse(639, 112, 1);
+	MoveMouse(644, 114, 1);
 	KeyDown(VK_MENU, 1);
 
 	pressKey(VK_F1, 1);
+	pressKey(VK_F2, 1);
 	KeyUp(VK_MENU, 1);
-	Sleep(12000);
+	Sleep(25000);
 	check = 0;
 	while (check == 0)
 	{
@@ -204,32 +235,28 @@ void target()
 		if (IsBlack(508, 985) == true)
 			check = 1;
 	}
-	MoveMouse(625, 240 + (y * 16), 6);
-	KeyDown(VK_CONTROL, 1);
-
-	ClickMouse(625, 240 + (y * 16));
-	KeyUp(VK_CONTROL, 1);
+	MoveMouse(765, 114, 1);
 	KeyDown(VK_MENU, 1);
 
 	pressKey(VK_F1, 1);
 	KeyUp(VK_MENU, 1);
-	Sleep(2000);
+	Sleep(5000);
 }
 int warp()
 {
-	MoveMouse(76, 154, 1);
+	MoveMouse(85, 154, 1);
 	Sleep(100 + rand() % 100);
 	POINT ptMouse;
 	GetCursorPos(&ptMouse);
 	int mX = ptMouse.x;
 	int mY = ptMouse.y;
-	MoveMouse(122, 185, 6);
+	MoveMouse(125, 190, 6);
 	Sleep(100 + rand() % 100);
-	MoveMouse(271, 182, 6);
-	MoveMouse(271, 182+(16*belt), 6);
+	MoveMouse(271, 190, 6);
+	MoveMouse(271, 190+(20*belt), 6);
 	Sleep(100 + rand() % 100);
-	MoveMouse(463, 182 + (16 * belt), 1);
-	Sleep(10000);
+	MoveMouse(463, 190+ (20 * belt), 1);
+	Sleep(20000);
 	int check = 0;
 	while (check == 0)
 	{
@@ -238,6 +265,11 @@ int warp()
 			check = 1;
 	}
 	Sleep(10000);
+	KeyDown(VK_CONTROL, 1);
+	Sleep(200);
+	pressKey(VK_SPACE, 1);
+	Sleep(150);
+	KeyUp(VK_CONTROL, 1);
 	return 0;
 }
 void undock()
@@ -263,42 +295,79 @@ void undock()
 				check = 2;
 			}
 		}
+
 		Sleep(5000);
+		KeyDown(VK_CONTROL, 1);
+		Sleep(200);
+		pressKey(VK_SPACE, 1);
+		Sleep(150);
+		KeyUp(VK_CONTROL, 1);
 
 
 }
 void dock()
 {
-	MoveMouse(76, 154, 1);
 	POINT ptMouse;
 	GetCursorPos(&ptMouse);
 	int mX = ptMouse.x;
 	int mY = ptMouse.y;
+	MoveMouse(85, 154, 1);
 	Sleep(100 + rand() % 100);
-	MoveMouse(122, 230, 6);
+	MoveMouse(122, 250, 6);
 	Sleep(100 + rand() % 100);
-	MoveMouse(339, 230, 6);
+	MoveMouse(339, 250, 6);
 	Sleep(100 + rand() % 100);
-	MoveMouse(576, 230, 6);
-	MoveMouse(576, 280, 1);
+	MoveMouse(576, 250, 6);
+	MoveMouse(576, 310, 1);
 	Sleep(100 + rand() % 100);
 	int check = 0;
-
+	int check2 = 0;
 	while (check == 0)
 	{
+		cout << to_string(check)+"\n";
 		shutdown();
-		if (IsBlack(27, 88) == true)
-		{
+		if (IsBlack(508, 985) == false)
 			check = 1;
+		if (check2 > 30000)
+		{
+			shutdown();
+			if (IsBlack(508, 985) == true)
+			{
+				GetCursorPos(&ptMouse);
+				mX = ptMouse.x;
+				mY = ptMouse.y;
+				MoveMouse(85, 154, 1);
+				Sleep(100);
+				MoveMouse(122, 250, 6);
+				Sleep(100);
+				MoveMouse(339, 250, 6);
+				Sleep(100);
+				MoveMouse(576, 250, 6);
+				MoveMouse(576, 310, 1);
+				Sleep(100);
+				check2 = 0;
+			}
 		}
-
+		Sleep(1);
+		check2++;
 	}
 	while (check == 1)
 	{
+		cout << to_string(check) + "\n";
+		shutdown();
+		if (IsBlack(27, 88) == true)
+		{
+			check = 2;
+		}
+
+	}
+	while (check == 2)
+	{
+		cout << to_string(check) + "\n";
 		shutdown();
 		if (IsBlack(27, 88) == false)
 		{
-			check = 2;
+			check = 3;
 		}
 	}
 	Sleep(5000);
@@ -407,8 +476,8 @@ void MoveMouse(int x, int y, int rmouse)
 	POINT ptMouse;
 	RECT windowPosition;
 	GetWindowRect(eveWindow,&windowPosition);
-	int finalX =( windowPosition.left + x) + rand() % 3;
-	int finalY = (windowPosition.top + y) + rand() % 3;
+	int finalX =( windowPosition.left + x);
+	int finalY = (windowPosition.top + y);
 	GetCursorPos(&ptMouse);
 	int mX = ptMouse.x;
 	int mY = ptMouse.y;
@@ -427,33 +496,33 @@ void MoveMouse(int x, int y, int rmouse)
 		{
 			if (mX != finalX)
 			{
-				dx = 1 + rand() % 5;
+				dx = 2 + rand() % 2;
 			}
 		}
 		else
 		{
 			if (mX != finalX)
 			{
-				dx = -1 - rand() % 5;
+				dx = -2 - rand() % 2;
 			}
 		}
 		if (finalY > mY)
 		{
 			if (mY != finalY)
 			{
-				dy = 1 + rand() % 5;
+				dy = 2 + rand() % 2;
 			}
 		}
 		else
 		{
 			if (mY != finalY)
 			{
-				dy = -1 - rand() % 5;
+				dy = -2 - rand() % 2;
 			}
 		}
 		SetCursorPos(mX + (dx), mY + (dy));
 		SetForegroundWindow(eveWindow);
-		Sleep(2);
+		Sleep(1);
 
 	}
 	if (rmouse == 1)
